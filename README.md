@@ -61,9 +61,14 @@ bd-retail-tpcds/
 │       └── q9_ranking_mensual_ventas.py
 │
 ├── benchmark/
-│   ├── ejecutar_hive.sh            # corre las 9 consultas Hive y registra tiempos
-│   ├── ejecutar_spark.sh           # corre las 9 consultas Spark y registra tiempos
-│   └── resultados/                 # CSVs con tiempos, CPU y memoria por consulta
+│   ├── ejecutar_hive.sh
+│   ├── ejecutar_spark.sh
+│   ├── generar_comparativa.py
+│   └── resultados/
+│       ├── hive_tiempos.csv
+│       ├── spark_tiempos.csv
+│       ├── comparativa.csv
+│       └── comparativa_hive_vs_spark.png
 │
 ├── agentic/
 │   ├── agente.py                   # orquestador de skills
@@ -238,6 +243,19 @@ spark-submit spark/consultas/q1_top_clientes_compras.py
 
 # Ejecutar todas y registrar tiempos
 bash benchmark/ejecutar_spark.sh
+```
+
+### Benchmark comparativo
+
+```bash
+# Ejecutar benchmark Hive (genera benchmark/resultados/hive_tiempos.csv)
+bash benchmark/ejecutar_hive.sh
+
+# Ejecutar benchmark Spark (genera benchmark/resultados/spark_tiempos.csv)
+bash benchmark/ejecutar_spark.sh
+
+# Generar tabla comparativa y gráfico PNG
+python benchmark/generar_comparativa.py
 ```
 
 ### Web app (dashboard + agente)
