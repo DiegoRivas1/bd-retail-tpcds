@@ -29,6 +29,8 @@ bd-retail-tpcds/
 ├── README.md
 ├── .gitignore
 ├── setup.sh                        # instala dependencias Python en el master EMR
+├── .env.example                    # plantilla de variables de entorno
+├── .env                            # clave real (no se sube al repo, ver .gitignore)
 │
 ├── data/
 │   └── README.md                   # instrucciones para generar datos TPC-DS (10 GB)
@@ -157,7 +159,18 @@ git clone https://github.com/DiegoRivas1/bd-retail-tpcds.git
 cd bd-retail-tpcds
 ```
 
-### 2. Instalar dependencias Python
+### 2. Configurar variables de entorno
+
+```bash
+cp .env.example .env
+# Editar .env y reemplazar tu_api_key_aqui con la clave real
+```
+
+Obtener la key de Gemini en: https://aistudio.google.com/api-keys
+
+El `.env` está en `.gitignore`, la clave nunca llega a GitHub.
+
+### 3. Instalar dependencias Python
 
 ```bash
 bash setup.sh
@@ -169,7 +182,7 @@ bash setup.sh
 pip install fastapi uvicorn pyspark google-generativeai pandas matplotlib
 ```
 
-### 3. Configurar la API key de Gemini
+### 4. Configurar la API key de Gemini
 
 ```bash
 export GEMINI_API_KEY="tu_api_key_aqui"

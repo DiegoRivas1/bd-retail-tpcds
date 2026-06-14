@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pyspark
+google-generativeai
+pandas
+matplotlib
+jinja2
+python-dotenv
+httpx

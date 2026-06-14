@@ -1,0 +1,33 @@
+# Variables de entorno
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+dist/
+build/
+
+# Datos TPC-DS (son pesados, no van al repo)
+data/*.dat
+data/*.csv
+data/tpcds-kit/
+
+# Resultados de benchmark (se suben manualmente despues de ejecutar)
+# benchmark/resultados/*.csv  <- comentado: si queremos versionar resultados
+
+# LaTeX auxiliares
+informe/*.aux
+informe/*.log
+informe/*.out
+informe/*.toc
+informe/*.synctex.gz
+informe/*.fls
+informe/*.fdb_latexmk
+
+# JetBrains
+.idea/
+
+# macOS
+.DS_Store
