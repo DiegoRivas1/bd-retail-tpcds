@@ -8,7 +8,7 @@
 
 set -e
 
-# ── 1. PATH ──────────────────────────────────────────────
+# 1. PATH
 echo "Configurando PATH..."
 
 LOCAL_BIN="$HOME/.local/bin"
@@ -21,14 +21,14 @@ else
     echo "  PATH ya contiene $LOCAL_BIN."
 fi
 
-# ── 2. Dependencias Python ────────────────────────────────
+# 2. Dependencias Python
 echo ""
 echo "Instalando dependencias Python..."
 
 pip install \
     fastapi \
     uvicorn \
-    pyspark \
+#    pyspark \
     google-generativeai \
     pandas \
     matplotlib \
@@ -36,7 +36,7 @@ pip install \
     python-dotenv \
     httpx
 
-# ── 3. Cargar .env ────────────────────────────────────────
+# 3. Cargar .env
 echo ""
 echo "Verificando archivo .env..."
 
@@ -65,7 +65,7 @@ else
     echo "  Archivo .env cargado y variables exportadas a ~/.bashrc."
 fi
 
-# ── 4. Verificar GEMINI_API_KEY ───────────────────────────
+#  4. Verificar GEMINI_API_KEY
 echo ""
 if [ -z "$GEMINI_API_KEY" ]; then
     echo "AVISO: GEMINI_API_KEY no esta configurada. La capa agéntica no funcionara sin ella."
@@ -73,7 +73,7 @@ else
     echo "GEMINI_API_KEY configurada correctamente."
 fi
 
-# ── 5. Resumen ────────────────────────────────────────────
+#  5. Resumen
 echo ""
 echo "Setup completado."
 echo "Ejecutar 'source ~/.bashrc' o abrir una nueva terminal para aplicar los cambios de PATH."

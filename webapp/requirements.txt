@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-pyspark
+#pyspark
 google-generativeai
 pandas
 matplotlib
