@@ -29,7 +29,7 @@ def obtener_sesion_spark() -> SparkSession:
 
 def ejecutar(sql: str) -> dict:
    spark = obtener_sesion_spark()
-
+   spark.sql("SHOW TABLES").show()
 
    try:
        sql = sql.replace("USE retail;", "").replace("use retail;", "").strip()
