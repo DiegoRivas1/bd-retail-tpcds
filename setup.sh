@@ -28,7 +28,6 @@ echo "Instalando dependencias Python..."
 pip install \
     fastapi \
     uvicorn \
-#    pyspark \
     google-generativeai \
     pandas \
     matplotlib \
