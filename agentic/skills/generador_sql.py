@@ -68,7 +68,7 @@ def generar_sql(pregunta: str) -> str:
 
     genai.configure(api_key=api_key)
     modelo = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
+        model_name="gemini-1.0-pro,
         system_instruction=PROMPT_SISTEMA,
     )
 
