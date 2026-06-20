@@ -1,8 +1,10 @@
-# ejecutor_consulta.py
-# Skill 3: ejecuta una consulta SQL en Spark y retorna los resultados
-# como lista de diccionarios lista para serializar a JSON.
-
 from pyspark.sql import SparkSession
+import os
+
+os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-amazon-corretto.x86_64"
+os.environ["SPARK_SUBMIT_OPTS"] = "--add-opens=java.base/java.lang=ALL-UNNAMED"
+
+_spark = None  # 👈 IMPORTANTE: variable global
 
 def obtener_sesion_spark() -> SparkSession:
     global _spark
@@ -11,24 +13,14 @@ def obtener_sesion_spark() -> SparkSession:
         _spark = (
             SparkSession.builder
             .appName("agente_retail")
-            .master("local[*]")
+            .enableHiveSupport()
             .getOrCreate()
         )
 
     return _spark
-#def obtener_sesion_spark() -> SparkSession:
-#   return SparkSession.builder \
-#      .appName("agente_retail") \
-#     .enableHiveSupport() \
-#    .getOrCreate()
 
 
 def ejecutar(sql: str) -> dict:
-    """
-    Ejecuta una consulta SQL en Spark SQL.
-    Retorna un diccionario con columnas, filas y total de registros.
-    En caso de error retorna el mensaje de excepcion.
-    """
     spark = obtener_sesion_spark()
 
     try:
