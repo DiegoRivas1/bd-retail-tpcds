@@ -92,12 +92,14 @@ bd-retail-tpcds/
 └── informe/
     ├── main.tex
     ├── secciones/
+    │   ├── caratula.tex
     │   ├── marco_conceptual.tex
     │   ├── implementacion_hive.tex
     │   ├── implementacion_spark.tex
     │   ├── benchmark.tex
-    │   ├── analisis_agenticoc.tex
+    │   ├── analisis_agentico.tex
     │   └── conclusiones.tex
+    │   └── repositorio.tex     ← link al repo GitHub
     └── figuras/                    # capturas de pantalla para el informe
 ```
 
