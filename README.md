@@ -1,7 +1,7 @@
 # bd-retail-tpcds
 
 Data Engineering para Retail utilizando Hive, Spark y LLM sobre Amazon EMR.
-Trabajo Unidad II — BigData 2026.
+Trabajo Unidad II - BigData 2026.
 
 ---
 
@@ -169,8 +169,8 @@ cd bd-retail-tpcds
 ### 2. Configurar variables de entorno
 
 ```bash
-cp .env.example .env
-# Editar .env y reemplazar tu_api_key_aqui con la clave real
+cp ...env.example ..env
+# Editar ..env y reemplazar tu_api_key_aqui con la clave real
 ```
 
 Obtener la key de Gemini en: https://aistudio.google.com/api-keys

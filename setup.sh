@@ -24,7 +24,7 @@ echo "Verificando archivo .env..."
 
 if [ -f ".env" ]; then
     # shellcheck disable=SC2046
-    export $(grep -v '^#' .env | xargs)
+    export $(grep -v '^#' ..env | xargs)
     echo "Archivo .env cargado."
 else
     echo ""

@@ -64,7 +64,7 @@ def generar_sql(pregunta: str) -> str:
     """
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        raise ValueError("GEMINI_API_KEY no configurada. Verificar archivo .env")
+        raise ValueError("GEMINI_API_KEY no configurada. Verificar archivo ..env")
 
     genai.configure(api_key=api_key)
     modelo = genai.GenerativeModel(
