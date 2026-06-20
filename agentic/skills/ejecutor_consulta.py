@@ -32,7 +32,7 @@ def ejecutar(sql: str) -> dict:
    spark.sql("SHOW TABLES").show()
 
    try:
-       sql = sql.replace("USE retail;", "").replace("use retail;", "").strip()
+       #sql = sql.replace("USE retail;", "").replace("use retail;", "").strip()
        df = spark.sql(sql)
        columnas = df.columns
        filas = [row.asDict() for row in df.collect()]
