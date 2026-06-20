@@ -169,7 +169,7 @@ cd bd-retail-tpcds
 ### 2. Configurar variables de entorno
 
 ```bash
-cp ...env.example ..env
+cp .env.example .env
 # Editar ..env y reemplazar tu_api_key_aqui con la clave real
 ```
 
