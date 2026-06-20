@@ -132,11 +132,11 @@ hadoop fs -mkdir -p /user/hadoop/tpcds/store_sales
 ### 2. Subir los archivos
 
 ```bash
-hadoop fs -put ~/tpcds-data/customer.dat      /user/hadoop/tpcds/customer/
-hadoop fs -put ~/tpcds-data/item.dat          /user/hadoop/tpcds/item/
-hadoop fs -put ~/tpcds-data/store.dat         /user/hadoop/tpcds/store/
-hadoop fs -put ~/tpcds-data/date_dim.dat      /user/hadoop/tpcds/date_dim/
-hadoop fs -put ~/tpcds-data/store_sales*.dat  /user/hadoop/tpcds/store_sales/
+hadoop fs -put /home/hadoop/tpcds-data/customer.dat   /user/hadoop/tpcds/customer/
+hadoop fs -put /home/hadoop/tpcds-data/item.dat       /user/hadoop/tpcds/item/
+hadoop fs -put /home/hadoop/tpcds-data/store.dat      /user/hadoop/tpcds/store/
+hadoop fs -put /home/hadoop/tpcds-data/date_dim.dat   /user/hadoop/tpcds/date_dim/
+hadoop fs -put /home/hadoop/tpcds-data/store_sales_*.dat /user/hadoop/tpcds/store_sales/
 ```
 
 > Si se genero con `-PARALLEL`, los archivos de `store_sales` seran multiples.

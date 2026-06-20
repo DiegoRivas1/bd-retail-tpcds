@@ -155,7 +155,7 @@ async function enviarConsulta() {
             body: JSON.stringify({ pregunta }),
         });
         const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Tiempo de espera agotado (15s)')), 15000)
+            setTimeout(() => reject(new Error('Tiempo de espera agotado (120s)')), 120000)
         );
 
         const respuesta = await Promise.race([fetchPromise, timeoutPromise]);
