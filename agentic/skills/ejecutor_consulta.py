@@ -29,11 +29,16 @@ def obtener_sesion_spark() -> SparkSession:
 
 def ejecutar(sql: str) -> dict:
    spark = obtener_sesion_spark()
-   spark.sql("SHOW TABLES").show()
+   #spark.sql("SHOW TABLES").show()
 
    try:
-       #sql = sql.replace("USE retail;", "").replace("use retail;", "").strip()
+       #  FORZAR ESQUEMA SIEMPRE
+       spark.sql("USE retail")
+
+       #  SANITIZAR SQL (opcional pero recomendado)
+       sql = sql.replace("USE retail;", "").replace("use retail;", "").strip()
        df = spark.sql(sql)
+
        columnas = df.columns
        filas = [row.asDict() for row in df.collect()]
 
