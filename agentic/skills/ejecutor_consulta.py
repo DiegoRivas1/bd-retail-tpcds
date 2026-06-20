@@ -4,12 +4,23 @@
 
 from pyspark.sql import SparkSession
 
-
 def obtener_sesion_spark() -> SparkSession:
-    return SparkSession.builder \
-        .appName("agente_retail") \
-        .enableHiveSupport() \
-        .getOrCreate()
+    global _spark
+
+    if _spark is None:
+        _spark = (
+            SparkSession.builder
+            .appName("agente_retail")
+            .master("local[*]")
+            .getOrCreate()
+        )
+
+    return _spark
+#def obtener_sesion_spark() -> SparkSession:
+#   return SparkSession.builder \
+#      .appName("agente_retail") \
+#     .enableHiveSupport() \
+#    .getOrCreate()
 
 
 def ejecutar(sql: str) -> dict:
