@@ -1,0 +1,185 @@
+% main.tex
+% Informe: Data Engineering para Retail utilizando Hive, Spark y LLM
+% Compilar con: pdflatex main.tex
+
+\documentclass[12pt, a4paper]{article}
+
+% ── Codificacion y lenguaje ──
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+
+% ── Márgenes ──
+\usepackage[
+    top=2.5cm,
+    bottom=2.5cm,
+    left=3cm,
+    right=2.5cm
+]{geometry}
+
+% ── Fuentes ──
+\usepackage{lmodern}
+
+% ── Colores ──
+\usepackage[dvipsnames, table]{xcolor}
+\definecolor{hivecolor}{RGB}{249, 115, 22}
+\definecolor{sparkcolor}{RGB}{59, 130, 246}
+\definecolor{codebackground}{RGB}{24, 27, 34}
+\definecolor{codecomment}{RGB}{100, 116, 139}
+\definecolor{codekeyword}{RGB}{0, 229, 195}
+\definecolor{codestring}{RGB}{250, 204, 21}
+\definecolor{codenumber}{RGB}{148, 163, 184}
+
+% ── Graficos e imagenes ──
+\usepackage{graphicx}
+\usepackage{float}
+
+% ── Tablas ──
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{longtable}
+
+% ── Codigo fuente ──
+\usepackage{listings}
+
+\lstdefinestyle{hiveql}{
+    backgroundcolor=\color{codebackground},
+    basicstyle=\ttfamily\footnotesize\color{white},
+    keywordstyle=\color{codekeyword}\bfseries,
+    commentstyle=\color{codecomment}\itshape,
+    stringstyle=\color{codestring},
+    numberstyle=\tiny\color{codenumber},
+    numbers=left,
+    stepnumber=1,
+    numbersep=8pt,
+    tabsize=4,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{gray!30},
+    framesep=6pt,
+    xleftmargin=16pt,
+    morekeywords={
+        SELECT, FROM, WHERE, JOIN, ON, GROUP, BY, ORDER,
+        HAVING, LIMIT, COUNT, SUM, AVG, MAX, MIN, AS,
+        CREATE, TABLE, DATABASE, USE, EXTERNAL, IF, NOT,
+        EXISTS, ROW, FORMAT, DELIMITED, FIELDS, TERMINATED,
+        STORED, TEXTFILE, LOCATION, SHOW, TABLES,
+        RANK, OVER, PARTITION, DISTINCT, LEFT, INNER,
+        QUALIFY, ROW_NUMBER
+    },
+    sensitive=false,
+    morecomment=[l]{--},
+    morestring=[b]',
+    morestring=[b]"
+}
+
+\lstdefinestyle{python}{
+    backgroundcolor=\color{codebackground},
+    basicstyle=\ttfamily\footnotesize\color{white},
+    keywordstyle=\color{codekeyword}\bfseries,
+    commentstyle=\color{codecomment}\itshape,
+    stringstyle=\color{codestring},
+    numberstyle=\tiny\color{codenumber},
+    numbers=left,
+    stepnumber=1,
+    numbersep=8pt,
+    tabsize=4,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{gray!30},
+    framesep=6pt,
+    xleftmargin=16pt,
+    language=Python
+}
+
+\lstdefinestyle{bash}{
+    backgroundcolor=\color{codebackground},
+    basicstyle=\ttfamily\footnotesize\color{white},
+    commentstyle=\color{codecomment}\itshape,
+    numberstyle=\tiny\color{codenumber},
+    numbers=none,
+    tabsize=4,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{gray!30},
+    framesep=6pt,
+    xleftmargin=8pt,
+    language=bash
+}
+
+% ── Hipervinculos ──
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=sparkcolor,
+    urlcolor=sparkcolor,
+    citecolor=sparkcolor,
+    pdftitle={Data Engineering para Retail — Hive, Spark y LLM},
+    pdfauthor={EPCC UNSA},
+}
+
+% ── Encabezados y pie de pagina ──
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{gray}{BigData 2026A — EPCC UNSA}}
+\fancyhead[R]{\small\textcolor{gray}{Retail Analytics TPC-DS}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Espaciado entre parrafos ──
+\usepackage{parskip}
+\setlength{\parskip}{6pt}
+
+% ── Utilidades ──
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage{caption}
+\captionsetup{
+    font=small,
+    labelfont=bf,
+    skip=6pt
+}
+
+% ── Comandos personalizados ──
+\newcommand{\hive}{\textcolor{hivecolor}{\textbf{Hive}}}
+\newcommand{\spark}{\textcolor{sparkcolor}{\textbf{Spark}}}
+\newcommand{\tpcds}{\texttt{TPC-DS}}
+
+% ════════════════════════════════════════════
+\begin{document}
+% ════════════════════════════════════════════
+
+\input{secciones/caratula}
+\newpage
+
+\tableofcontents
+\newpage
+
+\input{secciones/marco_conceptual}
+\newpage
+
+\input{secciones/implementacion_hive}
+\newpage
+
+\input{secciones/implementacion_spark}
+\newpage
+
+\input{secciones/benchmark}
+\newpage
+
+\input{secciones/analitico_agéntico}
+\newpage
+
+\input{secciones/conclusiones}
+\newpage
+
+\input{secciones/repositorio}
+
+% ════════════════════════════════════════════
+\end{document}
+% ════════════════════════════════════════════

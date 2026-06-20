@@ -1,0 +1,44 @@
+% secciones/repositorio.tex
+
+\section{Repositorio del proyecto}
+
+El código fuente completo del proyecto, incluyendo las consultas HiveQL, los scripts
+PySpark, la capa agéntica, el dashboard web y los scripts de benchmark, está disponible
+en el siguiente repositorio de GitHub:
+
+\vspace{0.5cm}
+
+\begin{center}
+    \large
+    \href{https://github.com/DiegoRivas1/bd-retail-tpcds}{%
+        \texttt{https://github.com/DiegoRivas1/bd-retail-tpcds}
+    }
+\end{center}
+
+\vspace{1cm}
+
+\subsection*{Instrucciones de clonado}
+
+\begin{lstlisting}[style=bash]
+# Clonar el repositorio en el master EMR
+git clone https://github.com/DiegoRivas1/bd-retail-tpcds.git
+cd bd-retail-tpcds
+
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con la API key de Gemini
+
+# Instalar dependencias
+bash setup.sh
+\end{lstlisting}
+
+\vspace{0.5cm}
+
+Para la configuración SSH del master EMR y Wave Terminal, ver el repositorio
+de entorno de desarrollo:
+
+\begin{center}
+    \href{https://github.com/DiegoRivas1/dev-environment-setup}{%
+        \texttt{https://github.com/DiegoRivas1/dev-environment-setup}
+    }
+\end{center}

@@ -1,0 +1,59 @@
+% secciones/conclusiones.tex
+
+\section{Conclusiones}
+
+\subsection{Sobre el Data Warehouse retail con TPC-DS}
+
+La implementación de un Data Warehouse basado en el benchmark \tpcds{} sobre Amazon EMR
+permitió simular un entorno retail realista con millones de transacciones distribuidas
+en cinco tablas relacionadas mediante un esquema estrella. La generación de 10 GB de datos
+con \texttt{tpcds-kit} y su carga en HDFS demostró ser un proceso reproducible y
+escalable, válido para evaluar tecnologías de procesamiento distribuido bajo condiciones
+controladas.
+
+\subsection{Sobre Apache Hive}
+
+HiveQL demostró ser una herramienta madura y expresiva para consultas analíticas batch.
+Su integración nativa con HDFS y el soporte de funciones de ventana como \texttt{RANK}
+y \texttt{QUALIFY} permitieron implementar las nueve consultas del proyecto con código
+SQL legible y mantenible. Su principal limitación es el tiempo de ejecución en consultas
+complejas con múltiples joins, donde el motor Tez introduce etapas de materialización
+en disco que incrementan la latencia.
+
+\subsection{Sobre Apache Spark}
+
+Apache Spark demostró un rendimiento superior en el benchmark comparativo, especialmente
+en consultas que involucran múltiples joins y funciones de ventana sobre el dataset de
+10 GB. El procesamiento en memoria y el optimizador Catalyst reducen significativamente
+las operaciones de escritura en disco respecto a Hive. Adicionalmente, la API de PySpark
+ofrece mayor flexibilidad para integrar lógica de negocio, como se evidenció en la
+implementación de la capa agéntica, donde la \texttt{SparkSession} se reutiliza
+entre consultas dinámicas generadas por el modelo LLM.
+
+\subsection{Sobre el análisis agéntico}
+
+La implementación de la capa agéntica basada en el paradigma de skills demostró que
+es posible democratizar el acceso a un Data Warehouse sin requerir conocimiento de SQL
+por parte del usuario final. El uso de la API de Gemini para generación automática de
+consultas permitió responder preguntas en lenguaje natural con resultados correctos
+en la mayoría de los casos evaluados.
+
+Sin embargo, el enfoque agéntico presenta limitaciones inherentes: la calidad del SQL
+generado depende de la claridad de la pregunta y de la completitud del esquema provisto
+en el prompt. Preguntas ambiguas o que requieren joins no triviales pueden producir
+resultados incorrectos sin que el sistema lo detecte automáticamente.
+
+\subsection{Recomendaciones}
+
+\begin{itemize}[noitemsep]
+    \item Para cargas analíticas batch programadas, \hive{} es suficiente y tiene
+          menor overhead de configuración.
+    \item Para análisis exploratorio interactivo y pipelines dinámicos, \spark{} es
+          la tecnología recomendada por su rendimiento y flexibilidad de API.
+    \item El análisis agéntico es adecuado para usuarios no técnicos con preguntas
+          directas sobre el negocio, pero debe complementarse con validación del SQL
+          generado en entornos de producción.
+    \item Para escalar el sistema agéntico, se recomienda agregar un paso de validación
+          del SQL generado antes de ejecutarlo en Spark, y mantener un historial de
+          preguntas y respuestas para mejorar el clasificador de intención.
+\end{itemize}

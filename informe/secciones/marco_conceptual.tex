@@ -1,0 +1,75 @@
+% secciones/marco_conceptual.tex
+
+\section{Marco Conceptual}
+
+\subsection{Big Data y el procesamiento distribuido}
+
+El crecimiento exponencial de los datos generados por empresas, redes sociales, sensores
+y plataformas digitales ha impulsado el desarrollo de tecnologías capaces de almacenar
+y procesar grandes volúmenes de información. Este fenómeno es conocido como \textit{Big Data}
+y suele caracterizarse mediante las cinco V: volumen, velocidad, variedad, veracidad y valor.
+En el contexto empresarial, especialmente en el sector retail, millones de transacciones pueden
+generarse diariamente, haciendo inviable el procesamiento mediante sistemas tradicionales.
+
+El procesamiento distribuido consiste en dividir una tarea compleja en múltiples subtareas
+que pueden ejecutarse simultáneamente sobre diferentes nodos de un clúster. Esta estrategia
+permite reducir los tiempos de procesamiento y mejorar la escalabilidad del sistema.
+Frameworks como Apache Hadoop y Apache Spark implementan este paradigma para resolver
+problemas relacionados con el análisis masivo de datos.
+
+\subsection{Data Warehouse}
+
+Un Data Warehouse es un sistema diseñado para almacenar información histórica y facilitar
+el análisis de datos. A diferencia de las bases de datos transaccionales, un Data Warehouse
+está optimizado para consultas analíticas y agregaciones. Generalmente se utilizan modelos
+dimensionales compuestos por tablas de hechos y tablas dimensión.
+
+En el contexto del retail, una tabla de ventas puede relacionarse con dimensiones como
+clientes, productos, tiendas, promociones y fechas. Para este proyecto se utiliza el
+esquema estrella definido por el benchmark \tpcds{}, donde \texttt{store\_sales} es la
+tabla de hechos central y \texttt{customer}, \texttt{item}, \texttt{store} y
+\texttt{date\_dim} son las dimensiones.
+
+\subsection{Benchmark TPC-DS}
+
+\tpcds{} es un benchmark desarrollado por el \textit{Transaction Processing Performance
+Council} para evaluar sistemas de Data Warehouse y plataformas analíticas. Simula un
+entorno comercial con múltiples canales de venta, incluyendo tiendas físicas, ventas web
+y catálogos.
+
+\tpcds{} proporciona un generador de datos capaz de crear datasets desde algunos gigabytes
+hasta varios terabytes, permitiendo evaluar el rendimiento de diferentes tecnologías
+analíticas bajo escenarios realistas. Para este proyecto se generaron 10 GB de datos
+simulando un entorno retail con millones de transacciones.
+
+\subsection{Apache Hive}
+
+Apache Hive es un sistema de Data Warehouse construido sobre Hadoop que permite consultar
+y gestionar grandes datasets almacenados en HDFS mediante un lenguaje similar a SQL
+denominado HiveQL. Hive traduce las consultas en trabajos MapReduce o Tez, lo que lo hace
+adecuado para consultas analíticas batch sobre grandes volúmenes de datos.
+
+\subsection{Apache Spark}
+
+Apache Spark es un motor de procesamiento distribuido en memoria diseñado para cargas de
+trabajo analíticas y de machine learning. Spark SQL permite ejecutar consultas SQL sobre
+DataFrames distribuidos, ofreciendo un rendimiento significativamente superior a MapReduce
+en la mayoría de escenarios al reducir las operaciones de lectura y escritura en disco.
+
+\subsection{Análisis Agéntico de datos}
+
+El análisis agéntico es un paradigma que combina modelos de lenguaje, herramientas
+analíticas y mecanismos de automatización para facilitar la exploración y consulta de
+grandes volúmenes de datos. En lugar de escribir consultas manualmente, el usuario puede
+expresar sus necesidades en lenguaje natural, mientras el sistema interpreta la intención,
+determina las operaciones necesarias y utiliza las herramientas adecuadas para obtener
+los resultados.
+
+A diferencia de un chatbot convencional, un sistema de análisis agéntico no se limita a
+generar texto, sino que puede interactuar con fuentes de datos, ejecutar consultas y
+combinar múltiples procesos para resolver problemas específicos del dominio de análisis.
+
+Para este proyecto se implementa una capa agéntica basada en el paradigma de \textit{skills},
+donde cada habilidad implementa una función específica del pipeline:
+identificación de intención, generación de SQL mediante la API de Gemini,
+ejecución sobre Spark SQL y presentación de resultados.
