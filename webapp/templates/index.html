@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Retail Analytics · BigData 2026A</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/estilos.css" />
+</head>
+<body>
+
+<div class="app-container">
+
+    <div class="top-nav">
+        <div class="brand">
+            <div class="brand-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.66 0 3-4 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4-3-9s1.34-9 3-9" />
+                    <path d="M12 3v18" />
+                </svg>
+            </div>
+            <span class="brand-name">Retail Analytics</span>
+        </div>
+        <div class="header-meta">BigData 2026A · EPCC UNSA · TPC-DS</div>
+    </div>
+
+    <div class="section-header">
+        <div class="section-title">Exploracion inteligente</div>
+    </div>
+    <div class="chip-group">
+        <button class="chip" onclick="cargarPregunta('Cuales fueron los cinco productos mas vendidos?')">Top 5 productos</button>
+        <button class="chip" onclick="cargarPregunta('Que tienda tuvo mayores ventas?')">Tienda con mas ventas</button>
+        <button class="chip" onclick="cargarPregunta('Cual fue el mes con mayores ingresos?')">Mes con mas ingresos</button>
+        <button class="chip" onclick="cargarPregunta('Cuales son los diez mejores clientes?')">Top 10 clientes</button>
+        <button class="chip" onclick="cargarPregunta('Que producto genero mayores ingresos?')">Producto mas rentable</button>
+        <button class="chip" onclick="cargarPregunta('Cuales son las ventas por dia de la semana?')">Ventas por dia</button>
+        <button class="chip" onclick="cargarPregunta('Cual es el ticket promedio por cliente?')">Ticket promedio</button>
+        <button class="chip" onclick="cargarPregunta('Cual es el ranking mensual de tiendas?')">Ranking mensual</button>
+        <button class="chip" onclick="cargarPregunta('Cuales son las ventas totales por mes?')">Ventas por mes</button>
+        <button class="chip" onclick="cargarPregunta('Cual fue la tienda con mayor ingreso promedio por transaccion?')">Ingreso promedio por tienda</button>
+    </div>
+
+    <div class="section-header">
+        <div class="section-title">Asistente agéntico — lenguaje natural a SQL a Spark</div>
+    </div>
+    <div class="chat-card">
+        <div class="input-group">
+            <input type="text" id="input-pregunta" class="chat-input"
+                   placeholder="Ej: que categoria lidera ventas este trimestre?"
+                   onkeydown="if(event.key === 'Enter') enviarConsulta()" />
+            <button id="btn-enviar" class="btn-primary" onclick="enviarConsulta()">
+                <span>Consultar</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </button>
+        </div>
+
+        <div class="pipeline-steps" id="pipeline-steps">
+            <span class="step" id="step-pregunta">PREGUNTA</span>
+            <span class="step-arrow">→</span>
+            <span class="step" id="step-intencion">INTENCION</span>
+            <span class="step-arrow">→</span>
+            <span class="step" id="step-sql">GENERAR SQL</span>
+            <span class="step-arrow">→</span>
+            <span class="step" id="step-spark">EJECUTAR SPARK</span>
+            <span class="step-arrow">→</span>
+            <span class="step" id="step-resultado">RESULTADO</span>
+        </div>
+
+        <div class="result-area" id="result-area">
+            <div class="empty-state">
+                <div>Escribe una pregunta o elige un ejemplo para comenzar.</div>
+                <div class="empty-sub">El agente generara SQL, lo ejecutara sobre TPC-DS y mostrara los resultados.</div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        Retail Analytics · NLP-to-SQL + Apache Spark · TPC-DS benchmark · EPCC UNSA 2026
+    </footer>
+
+</div>
+
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>

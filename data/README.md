@@ -7,40 +7,89 @@ y cargarlo en HDFS para su uso con Hive y Spark.
 
 ## Opcion A: Generar los datos con tpcds-kit (recomendado)
 
-### 1. Clonar y compilar tpcds-kit en el master EMR
+### 0. Ampliar el volumen EBS del master
+
+El volumen raíz del master EMR tiene 15 GB por defecto, insuficiente para generar 10 GB de datos. Antes de continuar, ampliar a 50 GB desde la consola AWS:
+
+1. Ir a EC2 → Instances → seleccionar la instancia Primary del cluster
+2. Pestaña Storage → click en el Volume ID
+3. Actions → Modify Volume → cambiar a 50 GiB → Modify
+
+Luego en el master aplicar el cambio:
 
 ```bash
-sudo yum install -y gcc make git
-git clone https://github.com/gregrahn/tpcds-kit.git
-cd tpcds-kit/tools
-make OS=LINUX
+sudo growpart /dev/xvda 1
+sudo xfs_growfs /
+df -h /
+```
+
+La salida debe mostrar ~50 GB disponibles antes de continuar.
+
+### 1. Instalar dependencias y compilar tpcds-kit
+
+Clonar fuera del repositorio del proyecto, directamente en el home:
+
+```bash
+sudo yum install -y gcc make git bison byacc flex
+
+git clone https://github.com/gregrahn/tpcds-kit.git ~/tpcds-kit
+cd ~/tpcds-kit/tools
+make OS=LINUX CFLAGS="-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DYYDEBUG -DLINUX -g -fcommon"
+```
+
+Verificar que compiló correctamente:
+
+```bash
+ls -la ~/tpcds-kit/tools/dsdgen
 ```
 
 ### 2. Generar los datos (10 GB)
 
 ```bash
-mkdir -p ~/tpcds-data
-cd tpcds-kit/tools
+mkdir -p /home/hadoop/tpcds-data
+cd ~/tpcds-kit/tools
 
-./dsdgen \
-    -SCALE 10 \
-    -DIR ~/tpcds-data \
-    -TERMINATE N \
-    -PARALLEL 4
+# Tablas globales — generadas secuencialmente para evitar colisiones de escritura
+./dsdgen -SCALE 10 -DIR /home/hadoop/tpcds-data -TERMINATE N -FORCE Y -TABLE customer
+./dsdgen -SCALE 10 -DIR /home/hadoop/tpcds-data -TERMINATE N -FORCE Y -TABLE item
+./dsdgen -SCALE 10 -DIR /home/hadoop/tpcds-data -TERMINATE N -FORCE Y -TABLE store
+./dsdgen -SCALE 10 -DIR /home/hadoop/tpcds-data -TERMINATE N -FORCE Y -TABLE date_dim
+
+# store_sales — generada en paralelo con 4 procesos separados
+./dsdgen -SCALE 10 -DIR /home/hadoop/tpcds-data -TERMINATE N -PARALLEL 4 -CHILD 1 -FORCE Y -TABLE store_sales &
+./dsdgen -SCALE 10 -DIR /home/hadoop/tpcds-data -TERMINATE N -PARALLEL 4 -CHILD 2 -FORCE Y -TABLE store_sales &
+./dsdgen -SCALE 10 -DIR /home/hadoop/tpcds-data -TERMINATE N -PARALLEL 4 -CHILD 3 -FORCE Y -TABLE store_sales &
+./dsdgen -SCALE 10 -DIR /home/hadoop/tpcds-data -TERMINATE N -PARALLEL 4 -CHILD 4 -FORCE Y -TABLE store_sales &
+wait
+
+echo "Generacion completada"
 ```
 
-`-SCALE 10` genera aproximadamente 10 GB distribuidos en los archivos `.dat`.
-`-PARALLEL 4` divide la generacion en 4 procesos para aprovechar los nucleos del master.
+> Usar siempre la ruta absoluta `/home/hadoop/tpcds-data` en `-DIR`, no `~/tpcds-data`. Las tablas globales como `customer`, `store` y `date_dim` no se particionan — generarlas en paralelo causa colisiones de escritura. Solo `store_sales` admite generación paralela con `-CHILD`.
 
-Los archivos generados siguen el patron `<tabla>_<parte>.dat` cuando se usa paralelismo,
-por ejemplo `store_sales_1_4.dat`, `store_sales_2_4.dat`, etc.
+`-SCALE 10` genera aproximadamente 10 GB. `-PARALLEL 4` define cuántas partes hay en total. `-CHILD N` especifica qué parte genera cada proceso — deben lanzarse como procesos separados con `&`.
 
-El tiempo de generacion en un master EMR m5.xlarge es aproximadamente 20-30 minutos.
+Los archivos de `store_sales` siguen el patrón `store_sales_N_4.dat`, por ejemplo `store_sales_1_4.dat`, `store_sales_2_4.dat`, etc.
+
+El tiempo de generación en un master EMR `m5.xlarge` es aproximadamente 10-20 minutos.
 
 ### 3. Verificar los archivos generados
 
 ```bash
-ls -lh ~/tpcds-data/*.dat
+ls -lh /home/hadoop/tpcds-data/ | grep -E "customer|item|store|date_dim|store_sales"
+```
+
+Las 5 tablas obligatorias deben estar presentes:
+
+```
+customer.dat         ~64 MB
+date_dim.dat         ~10 MB
+item.dat             ~28 MB
+store.dat            ~27 KB
+store_sales_1_4.dat  ~942 MB
+store_sales_2_4.dat  ~946 MB
+store_sales_3_4.dat  ~950 MB
+store_sales_4_4.dat  ~950 MB
 ```
 
 Las 5 tablas obligatorias deben estar presentes:
