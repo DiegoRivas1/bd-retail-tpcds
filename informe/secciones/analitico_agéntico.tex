@@ -14,23 +14,18 @@ El pipeline completo se compone de cuatro skills ejecutados en secuencia:
 \begin{enumerate}[noitemsep]
     \item \textbf{Clasificador de intención} — identifica el tipo de análisis solicitado
           mediante coincidencia de palabras clave en la pregunta.
-    \item \textbf{Generador SQL} — invoca la API de Gemini con el esquema de las cinco
-          tablas y la pregunta del usuario, obteniendo una consulta SQL compatible con Spark SQL.
+    \item \textbf{Generador SQL} — invoca la API de Gemini (\texttt{gemini-2.5-flash}) con
+          el esquema de las cinco tablas y la pregunta del usuario, obteniendo una consulta
+          SQL compatible con Spark SQL.
     \item \textbf{Ejecutor de consulta} — ejecuta el SQL generado sobre el Data Warehouse
           retail mediante una \texttt{SparkSession} con soporte Hive.
     \item \textbf{Formateador de resultado} — serializa el DataFrame resultante a JSON
           con tipos de datos normalizados para su consumo por el frontend.
 \end{enumerate}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{figuras/pipeline_agéntico.png}
-    \caption{Pipeline del sistema agéntico: de lenguaje natural a resultado sobre Spark.}
-\end{figure}
-
 \subsection{Generación de SQL con Gemini}
 
-El skill de generación SQL utiliza el modelo \texttt{gemini-1.5-flash} de Google.
+El skill de generación SQL utiliza el modelo \texttt{gemini-2.5-flash} de Google.
 El prompt de sistema incluye el esquema completo de las cinco tablas y restricciones
 sobre el formato de salida:
 
@@ -54,7 +49,8 @@ Reglas:
 
 El dashboard fue implementado con FastAPI como backend y HTML/CSS/JS como frontend.
 La interfaz permite ingresar preguntas en lenguaje natural y visualizar el pipeline
-de procesamiento en tiempo real.
+de procesamiento en tiempo real mediante una barra de pasos animada:
+\texttt{PREGUNTA → INTENCIÓN → GENERAR SQL → EJECUTAR SPARK → RESULTADO}.
 
 \begin{figure}[H]
     \centering
@@ -65,16 +61,45 @@ de procesamiento en tiempo real.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.92\textwidth]{figuras/dashboard_resultado.png}
-    \caption{Resultado de una consulta agéntica: badge de intención, SQL generado expandible y tabla de resultados.}
+    \caption{Resultado de consulta agéntica: ``¿Cuáles fueron los cinco productos más vendidos?''.
+             El agente identificó la intención \texttt{top\_productos}, generó SQL con Gemini,
+             lo ejecutó en Spark y devolvió 5 registros.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{figuras/dashboard_resultado1.png}
+    \caption{Resultado de consulta agéntica: ``¿Qué producto generó mayores ingresos?''.
+             El agente identificó la intención \texttt{productos\_ingresos}, generó SQL
+             con Gemini y ejecutó la consulta sobre la tabla \texttt{store\_sales}
+             agrupando por producto y sumando \texttt{ss\_net\_paid}.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{figuras/dashboard_resultado2.png}
+    \caption{Resultado de consulta agéntica: ``¿Cuáles son los tops de ventas por día?''.
+             El agente identificó la intención \texttt{ventas\_dia}, generó SQL haciendo
+             JOIN entre \texttt{store\_sales} y \texttt{date\_dim} agrupando por
+             \texttt{d\_day\_name} y ordenando por ingresos totales.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{figuras/dashboard_resultado3.png}
+    \caption{Resultado de consulta agéntica: ``¿Cuáles son los diez mejores clientes?''.
+             El agente identificó la intención \texttt{top\_clientes}, generó SQL con
+             JOIN entre \texttt{store\_sales} y \texttt{customer} ordenando por
+             \texttt{ss\_net\_paid} descendente con \texttt{LIMIT 10}.}
 \end{figure}
 
 \subsection{Consultas agénticas ejecutadas}
 
 \begin{table}[H]
     \centering
-    \caption{Consultas en lenguaje natural y SQL generado por Gemini}
+    \caption{Consultas en lenguaje natural e intención identificada}
     \label{tab:agéntico}
-    \begin{tabularx}{\textwidth}{l X}
+    \begin{tabularx}{\textwidth}{X l}
         \toprule
         \textbf{Pregunta en lenguaje natural} & \textbf{Intención identificada} \\
         \midrule
@@ -107,23 +132,22 @@ de procesamiento en tiempo real.
         Flexibilidad            & Total (cualquier query)  & Limitada al esquema TPC-DS \\
         Riesgo de error SQL     & Depende del analista     & Depende del modelo LLM \\
         Trazabilidad            & El analista conoce el SQL & SQL visible en la interfaz \\
-        Escalabilidad           & Un analista por sesión   & Múltiples usuarios simultáneos \\
+        Tiempo de respuesta     & Inmediato tras escribir  & 40-60s por inicialización Spark \\
         \bottomrule
     \end{tabularx}
 \end{table}
 
 \subsection{Limitaciones del enfoque agéntico}
 
-El sistema agéntico implementado presenta las siguientes limitaciones:
-
 \begin{itemize}[noitemsep]
     \item El clasificador de intención basado en palabras clave no cubre preguntas
           con formulaciones muy distintas a las previstas.
     \item Gemini puede generar SQL sintácticamente válido pero semánticamente incorrecto
-          si la pregunta es ambigua o hace referencia a columnas inexistentes.
-    \item El tiempo de respuesta del agente incluye la latencia de la API de Gemini
-          y el tiempo de ejecución en Spark, lo que puede ser mayor que una consulta
-          manual precompilada.
-    \item El sistema no mantiene contexto entre preguntas, por lo que cada consulta
-          se procesa de forma independiente.
+          si la pregunta es ambigua.
+    \item El tiempo de respuesta incluye la latencia de la API de Gemini y el tiempo
+          de inicialización de Spark en YARN (~40-60s para la primera consulta).
+    \item El sistema no mantiene contexto entre preguntas — cada consulta se procesa
+          de forma independiente.
+    \item La librería \texttt{google.generativeai} está deprecada; se recomienda migrar
+          a \texttt{google.genai} en futuras versiones.
 \end{itemize}

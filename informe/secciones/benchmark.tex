@@ -1,90 +1,124 @@
-% secciones/benchmark.tex
+% secciones/implementacion_spark.tex
 
-\section{Benchmark: \hive{} vs \spark{}}
+\section{Implementación en Apache Spark}
 
-\subsection{Metodología}
+Las mismas nueve consultas analíticas se implementaron en PySpark utilizando Spark SQL,
+conectado al metastore de Hive mediante \texttt{enableHiveSupport()}. Esto permite operar
+sobre las mismas tablas sin duplicar los datos en HDFS.
 
-El benchmark se ejecutó sobre el dataset \tpcds{} de 10 GB alojado en HDFS.
-Cada una de las nueve consultas se ejecutó de forma secuencial en ambos frameworks
-utilizando los scripts \texttt{benchmark/ejecutar\_hive.sh} y
-\texttt{benchmark/ejecutar\_spark.sh}. Los tiempos se midieron con precisión de
-milisegundos mediante \texttt{date +\%s\%N} y se registraron en archivos CSV.
+\subsection{Configuración de la sesión Spark}
 
-Las condiciones del entorno fueron idénticas para ambas tecnologías:
+Todos los scripts siguen el mismo patrón de inicialización:
 
-\begin{itemize}[noitemsep]
-    \item Clúster Amazon EMR sobre instancias \texttt{m5.xlarge}
-    \item Dataset TPC-DS de 10 GB en HDFS
-    \item Una ejecución por consulta sin caché previo
-    \item Motor Hive con Tez habilitado por defecto en EMR
-    \item Spark en modo \texttt{yarn --deploy-mode client}
-\end{itemize}
+\begin{lstlisting}[style=python, caption={Inicialización de SparkSession con soporte Hive}]
+from pyspark.sql import SparkSession
 
-\subsection{Resultados de tiempos de ejecución}
+spark = SparkSession.builder \
+    .appName("nombre_consulta") \
+    .enableHiveSupport() \
+    .getOrCreate()
 
-% Reemplazar los valores de la columna con los datos reales del CSV
-\begin{table}[H]
-    \centering
-    \caption{Tiempos de ejecución por consulta — \hive{} vs \spark{} (segundos)}
-    \label{tab:benchmark}
-    \begin{tabularx}{\textwidth}{l X r r r r}
-        \toprule
-        \textbf{ID} & \textbf{Consulta} & \textbf{Hive (s)} & \textbf{Spark (s)} & \textbf{Dif. (s)} & \textbf{Speedup} \\
-        \midrule
-        Q1 & Top 20 clientes por compras      & -- & -- & -- & -- \\
-        Q2 & Ventas por tienda                & -- & -- & -- & -- \\
-        Q3 & Ventas por mes                   & -- & -- & -- & -- \\
-        Q4 & Ventas por día de la semana      & -- & -- & -- & -- \\
-        Q5 & Top productos por tienda         & -- & -- & -- & -- \\
-        Q6 & Ticket promedio por cliente      & -- & -- & -- & -- \\
-        Q7 & Productos con mayor ingreso      & -- & -- & -- & -- \\
-        Q8 & Top clientes por gasto total     & -- & -- & -- & -- \\
-        Q9 & Ranking mensual de ventas        & -- & -- & -- & -- \\
-        \midrule
-        \multicolumn{2}{l}{\textbf{Total}} & -- & -- & -- & -- \\
-        \bottomrule
-    \end{tabularx}
-\end{table}
+spark.sql("USE retail")
+\end{lstlisting}
 
-\textit{Nota: los valores -- se reemplazan con los datos del archivo
-\texttt{benchmark/resultados/comparativa.csv} tras ejecutar el benchmark en el clúster.}
+El método \texttt{enableHiveSupport()} conecta Spark al metastore de Hive, permitiendo
+acceder directamente a las tablas definidas previamente sin necesidad de redefinir esquemas.
+Las consultas se ejecutaron con \texttt{/usr/bin/spark-submit} utilizando el Spark
+instalado en el cluster EMR (versión 3.5.6).
 
-\subsection{Gráfico comparativo}
+\subsection{Diferencias respecto a HiveQL}
+
+La principal diferencia técnica es el manejo de window functions con filtrado por rango.
+HiveQL soporta \texttt{QUALIFY} de forma nativa, mientras que Spark SQL no lo implementa.
+En Q5 se utilizó la API de DataFrame de PySpark:
+
+\begin{lstlisting}[style=python, caption={Q5 en Spark: top productos por tienda sin QUALIFY}]
+from pyspark.sql import Window
+from pyspark.sql.functions import rank
+
+ventas = spark.sql("""
+    SELECT s.s_store_name, i.i_product_name,
+           SUM(ss.ss_quantity) AS unidades_vendidas,
+           SUM(ss.ss_net_paid) AS ingresos_totales
+    FROM store_sales ss
+    JOIN store s ON ss.ss_store_sk = s.s_store_sk
+    JOIN item  i ON ss.ss_item_sk  = i.i_item_sk
+    GROUP BY s.s_store_name, i.i_product_name
+""")
+
+ventana = Window.partitionBy("s_store_name") \
+               .orderBy(ventas["unidades_vendidas"].desc())
+
+resultado = ventas \
+    .withColumn("ranking", rank().over(ventana)) \
+    .filter("ranking <= 5") \
+    .orderBy("s_store_name", "ranking")
+\end{lstlisting}
+
+\subsection{Resultados de las consultas en Spark}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\textwidth]{figuras/comparativa_hive_vs_spark.png}
-    \caption{Tiempo de ejecución por consulta — \hive{} vs \spark{}.
-             Generado por \texttt{benchmark/generar\_comparativa.py}.}
-    \label{fig:benchmark}
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q1_resultado.png}
+    \caption{Resultado de Q1 en Spark: top 20 clientes por número de compras. Tiempo: 37.33s.}
 \end{figure}
 
-\subsection{Análisis de resultados}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q2_resultado.png}
+    \caption{Resultado de Q2 en Spark: ventas por tienda. Tiempo: 38.72s.}
+\end{figure}
 
-Los resultados del benchmark permiten observar las siguientes tendencias:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q3_resultado_1.png}
+    \caption{Resultado de Q3 en Spark: ventas por mes (parte 1). Tiempo: 33.15s.}
+\end{figure}
 
-\textbf{Rendimiento general.}
-Spark demostró tiempos de ejecución menores en la mayoría de consultas,
-especialmente en aquellas que involucran múltiples \textit{joins} y agregaciones sobre
-grandes volúmenes de datos. Esto se debe al procesamiento en memoria que evita
-escrituras intermedias en disco, a diferencia de Hive con Tez que aún mantiene
-etapas de materialización.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q3_resultado_2.png}
+    \caption{Resultado de Q3 en Spark: ventas por mes (parte 2).}
+\end{figure}
 
-\textbf{Consultas con window functions.}
-Las consultas Q5 y Q9, que utilizan funciones de ventana (\texttt{RANK}, \texttt{ROW\_NUMBER}),
-mostraron mayor diferencia de rendimiento, donde Spark aprovecha mejor la ejecución
-en memoria de estas operaciones.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q4_resultado.png}
+    \caption{Resultado de Q4 en Spark: ventas por día de la semana. Tiempo: 34.41s.}
+\end{figure}
 
-\textbf{Consultas simples.}
-En consultas de agregación directa sin joins complejos, la diferencia entre ambos
-frameworks fue menor, con Hive mostrando rendimiento comparable en algunos casos.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q5_resultado.png}
+    \caption{Resultado de Q5 en Spark: top productos por tienda. Tiempo: 41.23s.}
+\end{figure}
 
-\textbf{Tiempo de inicio.}
-Hive presentó menor latencia de inicio al no requerir la inicialización de una
-\texttt{SparkSession}. Para consultas muy simples sobre datasets pequeños,
-este overhead inicial puede hacer que Hive sea más rápido en la primera ejecución.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q6_resultado.png}
+    \caption{Resultado de Q6 en Spark: ticket promedio por cliente. Tiempo: 37.66s.}
+\end{figure}
 
-\textbf{Conclusión del benchmark.}
-Spark es la tecnología recomendada para análisis sobre el Data Warehouse retail
-en escenarios con datos de 10 GB o más, tanto por rendimiento como por la
-flexibilidad de su API para implementar la capa agéntica.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q7_resultado.png}
+    \caption{Resultado de Q7 en Spark: productos con mayor ingreso. Tiempo: 36.73s.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q8_resultado.png}
+    \caption{Resultado de Q8 en Spark: top clientes por gasto total. Tiempo: 39.01s.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q9_resultado_1.png}
+    \caption{Resultado de Q9 en Spark: ranking mensual de ventas (parte 1). Tiempo: 34.18s.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q9_resultado_2.png}
+    \caption{Resultado de Q9 en Spark: ranking mensual de ventas (parte 2).}
+\end{figure}

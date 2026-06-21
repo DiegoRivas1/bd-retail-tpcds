@@ -22,15 +22,15 @@ spark.sql("USE retail")
 \end{lstlisting}
 
 El método \texttt{enableHiveSupport()} conecta Spark al metastore de Hive, permitiendo
-acceder directamente a las tablas definidas en la sección anterior sin necesidad de
-redefinir esquemas ni recargar datos.
+acceder directamente a las tablas definidas previamente sin necesidad de redefinir esquemas.
+Las consultas se ejecutaron con \texttt{/usr/bin/spark-submit} utilizando el Spark
+instalado en el cluster EMR (versión 3.5.6).
 
 \subsection{Diferencias respecto a HiveQL}
 
-La principal diferencia técnica entre ambas implementaciones es el manejo de
-\textit{window functions} en consultas que requieren filtrar por rango dentro de particiones.
-HiveQL soporta la cláusula \texttt{QUALIFY} de forma nativa, mientras que Spark SQL no la
-implementa. En esos casos se aplica la API de DataFrame de PySpark:
+La principal diferencia técnica es el manejo de window functions con filtrado por rango.
+HiveQL soporta \texttt{QUALIFY} de forma nativa, mientras que Spark SQL no lo implementa.
+En Q5 se utilizó la API de DataFrame de PySpark:
 
 \begin{lstlisting}[style=python, caption={Q5 en Spark: top productos por tienda sin QUALIFY}]
 from pyspark.sql import Window
@@ -53,38 +53,72 @@ resultado = ventas \
     .withColumn("ranking", rank().over(ventana)) \
     .filter("ranking <= 5") \
     .orderBy("s_store_name", "ranking")
-
-resultado.show(truncate=False)
 \end{lstlisting}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{figuras/spark_q5_resultado.png}
-    \caption{Resultado de Q5 en Spark: top productos por tienda.}
-\end{figure}
 
 \subsection{Resultados de las consultas en Spark}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figuras/spark_q1_resultado.png}
-    \caption{Resultado de Q1 en Spark: top 20 clientes por número de compras.}
+    \caption{Resultado de Q1 en Spark: top 20 clientes por número de compras. Tiempo: 37.33s.}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{figuras/spark_q2_resultado.png}
-    \caption{Resultado de Q2 en Spark: ventas por tienda.}
+    \caption{Resultado de Q2 en Spark: ventas por tienda. Tiempo: 38.72s.}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{figuras/spark_q3_resultado.png}
-    \caption{Resultado de Q3 en Spark: ventas por mes.}
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q3_resultado_1.png}
+    \caption{Resultado de Q3 en Spark: ventas por mes (parte 1). Tiempo: 33.15s.}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{figuras/spark_q9_resultado.png}
-    \caption{Resultado de Q9 en Spark: ranking mensual de tiendas.}
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q3_resultado_2.png}
+    \caption{Resultado de Q3 en Spark: ventas por mes (parte 2).}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q4_resultado.png}
+    \caption{Resultado de Q4 en Spark: ventas por día de la semana. Tiempo: 34.41s.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q5_resultado.png}
+    \caption{Resultado de Q5 en Spark: top productos por tienda. Tiempo: 41.23s.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q6_resultado.png}
+    \caption{Resultado de Q6 en Spark: ticket promedio por cliente. Tiempo: 37.66s.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q7_resultado.png}
+    \caption{Resultado de Q7 en Spark: productos con mayor ingreso. Tiempo: 36.73s.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q8_resultado.png}
+    \caption{Resultado de Q8 en Spark: top clientes por gasto total. Tiempo: 39.01s.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q9_resultado_1.png}
+    \caption{Resultado de Q9 en Spark: ranking mensual de ventas (parte 1). Tiempo: 34.18s.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figuras/spark_q9_resultado_2.png}
+    \caption{Resultado de Q9 en Spark: ranking mensual de ventas (parte 2).}
 \end{figure}
