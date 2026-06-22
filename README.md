@@ -1,7 +1,7 @@
 # bd-retail-tpcds
 
 Data Engineering para Retail utilizando Hive, Spark y LLM sobre Amazon EMR.
-Trabajo Unidad II - BigData 2026.
+Trabajo Unidad II, BigData 2026A
 
 ---
 
@@ -13,9 +13,9 @@ y una capa de análisis agéntico que interpreta preguntas en lenguaje natural y
 usando la API de Gemini.
 
 Stack:
-- Amazon EMR (Hadoop, Hive, Spark)
+- Amazon EMR 7.13.0 (Hadoop 3.4.2, Hive 3.1.3, Spark 3.5.6, Tez 0.10.2)
 - Python 3 + FastAPI (web app y agente)
-- Gemini API (generación de SQL)
+- Gemini API: gemini-2.5-flash (generación de SQL)
 - HTML/CSS/JS (dashboard de visualización)
 - LaTeX (informe)
 
@@ -97,9 +97,9 @@ bd-retail-tpcds/
     │   ├── implementacion_hive.tex
     │   ├── implementacion_spark.tex
     │   ├── benchmark.tex
-    │   ├── analisis_agentico.tex
-    │   └── conclusiones.tex
-    │   └── repositorio.tex     ← link al repo GitHub
+    │   ├── analitico_agéntico.tex
+    │   ├── conclusiones.tex
+    │   └── repositorio.tex
     └── figuras/                    # capturas de pantalla para el informe
 ```
 
@@ -119,22 +119,30 @@ de tener el archivo `~/.ssh/config` configurado con el DNS actual del master y e
 > Cada vez que se levanta un nuevo clúster EMR en Vocareum, el DNS del master cambia.
 > Actualizar `HostName` en el config SSH antes de conectarse.
 
-### JetBrains Gateway (desarrollo remoto)
+---
 
-Para editar y ejecutar desde el IDE directamente en el master:
+## Configuración del clúster EMR
 
-1. Instalar [JetBrains Gateway](https://www.jetbrains.com/remote-development/gateway/)
-2. Nueva conexión SSH → usar el alias `aws-emr-lab` o el DNS directo del master
-3. Abrir la carpeta `~/bd-retail-tpcds/` en el master como proyecto remoto
+Al crear el clúster en la consola AWS, usar la siguiente configuración:
 
-El master EMR tiene Python 3, Spark y Hive disponibles. Todo se ejecuta ahí.
+| Parámetro | Valor |
+|---|---|
+| Versión EMR | emr-7.13.0 |
+| Aplicaciones | Custom: Hadoop + Hive + Spark + Tez + HCatalog |
+| Nodo master | m5.xlarge |
+| Nodos core | 2 x m5.xlarge |
+| EBS master | **50 GB** (ajustar en configuración avanzada al crear) |
+| AWS Glue | Desactivado |
+
+> El volumen EBS debe configurarse en 50 GB al momento de crear el clúster
+> no después. Esto evita tener que ejecutar `growpart` manualmente.
 
 ---
 
 ## Flujo de trabajo recomendado
 
 ```
-PC local (JetBrains / editor)
+PC local (editor)
     │
     ├── desarrollar código (webapp, agente, consultas)
     ├── git push → GitHub
@@ -145,7 +153,7 @@ PC local (JetBrains / editor)
         Levantar clúster EMR en Vocareum
         ssh aws-emr-lab
         git clone / git pull ~/bd-retail-tpcds
-        cargar datos TPC-DS a HDFS
+        generar datos TPC-DS y cargar a HDFS (ver data/README.md)
         ejecutar consultas y benchmarks
         guardar resultados en benchmark/resultados/
         git push resultados
@@ -159,9 +167,10 @@ PC local (JetBrains / editor)
 
 ## Configuración del entorno en el master
 
-### 1. Clonar el repositorio
+### 1. Instalar git y clonar el repositorio
 
 ```bash
+sudo yum install -y git
 git clone https://github.com/DiegoRivas1/bd-retail-tpcds.git
 cd bd-retail-tpcds
 ```
@@ -170,32 +179,34 @@ cd bd-retail-tpcds
 
 ```bash
 cp .env.example .env
-# Editar ..env y reemplazar tu_api_key_aqui con la clave real
+nano .env
+# Reemplazar tu_api_key_aqui con la clave real de Gemini
+# Guardar con Ctrl+O, salir con Ctrl+X
 ```
 
 Obtener la key de Gemini en: https://aistudio.google.com/api-keys
 
-El `.env` está en `.gitignore`, la clave nunca llega a GitHub.
+El `.env` está en `.gitignore` la clave nunca llega a GitHub.
 
 ### 3. Instalar dependencias Python
 
 ```bash
 bash setup.sh
+source ~/.bashrc
 ```
 
-`setup.sh` instala:
+`setup.sh` configura el PATH, instala las dependencias y carga el `.env` automáticamente.
+
+### 4. Configurar PYTHONPATH para PySpark del sistema
 
 ```bash
-pip install fastapi uvicorn pyspark google-generativeai pandas matplotlib
+export PYTHONPATH=/usr/lib/spark/python:/usr/lib/spark/python/lib/py4j-0.10.9.7-src.zip:$PYTHONPATH
+echo 'export PYTHONPATH=/usr/lib/spark/python:/usr/lib/spark/python/lib/py4j-0.10.9.7-src.zip:$PYTHONPATH' >> ~/.bashrc
+source ~/.bashrc
 ```
 
-### 4. Configurar la API key de Gemini
-
-```bash
-export GEMINI_API_KEY="tu_api_key_aqui"
-```
-
-Obtener la key en: https://aistudio.google.com/api-keys
+> Esto es necesario para que la webapp pueda importar PySpark usando el Spark
+> del cluster EMR en lugar del instalado por pip, evitando conflictos de versión de Java.
 
 ---
 
@@ -203,11 +214,7 @@ Obtener la key en: https://aistudio.google.com/api-keys
 
 Ver instrucciones detalladas en `data/README.md`.
 
-Opciones:
-- Generar 10 GB localmente con [tpcds-kit](https://github.com/gregrahn/tpcds-kit) y subir a HDFS
-- Usar un dataset TPC-DS ya generado (> 10 GB) disponible en S3 público
-
-Tablas obligatorias que deben estar en HDFS antes de ejecutar las consultas:
+Tablas obligatorias que deben estar en HDFS:
 
 | Tabla | Descripción |
 |---|---|
@@ -215,11 +222,12 @@ Tablas obligatorias que deben estar en HDFS antes de ejecutar las consultas:
 | `item` | Catálogo de productos |
 | `store` | Tiendas físicas |
 | `date_dim` | Dimensión de fechas |
-| `store_sales` | Transacciones de ventas |
+| `store_sales` | Transacciones de ventas (~28.8M filas con 10 GB) |
 
 ### Cargar tablas en Hive
 
 ```bash
+cd ~/bd-retail-tpcds
 hive -f hive/crear_tablas.hql
 ```
 
@@ -241,29 +249,36 @@ bash benchmark/ejecutar_hive.sh
 
 ```bash
 # Ejecutar una consulta individual
-spark-submit spark/consultas/q1_top_clientes_compras.py
+/usr/bin/spark-submit spark/consultas/q1_top_clientes_compras.py
 
 # Ejecutar todas y registrar tiempos
 bash benchmark/ejecutar_spark.sh
 ```
 
+> Usar siempre `/usr/bin/spark-submit` y no `spark-submit` directamente.
+> El PATH puede apuntar al spark-submit de pip que genera conflictos de versión Java.
+
 ### Benchmark comparativo
 
 ```bash
-# Ejecutar benchmark Hive (genera benchmark/resultados/hive_tiempos.csv)
 bash benchmark/ejecutar_hive.sh
-
-# Ejecutar benchmark Spark (genera benchmark/resultados/spark_tiempos.csv)
 bash benchmark/ejecutar_spark.sh
-
-# Generar tabla comparativa y gráfico PNG
 python benchmark/generar_comparativa.py
 ```
+
+Resultados en `benchmark/resultados/`:
+
+| Archivo | Contenido |
+|---|---|
+| `hive_tiempos.csv` | Tiempos por consulta en Hive |
+| `spark_tiempos.csv` | Tiempos por consulta en Spark |
+| `comparativa.csv` | Tabla unificada con speedup Spark vs Hive |
+| `comparativa_hive_vs_spark.png` | Gráfico de barras para el informe |
 
 ### Web app (dashboard + agente)
 
 ```bash
-cd webapp
+cd ~/bd-retail-tpcds/webapp
 uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
@@ -276,63 +291,27 @@ ssh -L 8000:localhost:8000 aws-emr-lab
 
 Luego abrir: http://localhost:8000
 
+> La primera consulta agéntica tarda ~40-60s porque inicializa la SparkSession en YARN.
+> Las siguientes son más rápidas al reutilizar la sesión.
+
 ---
 
-## Módulos
+## Resultados del benchmark
 
-### Hive y Spark
+Tiempos obtenidos sobre dataset TPC-DS 10 GB en EMR 7.13.0 (m5.xlarge, 3 nodos):
 
-Las 9 consultas analíticas están implementadas en ambos frameworks con la misma lógica:
-
-- Top 20 clientes con mayor número de compras
-- Ventas por tienda
-- Ventas por mes
-- Ventas por día de la semana
-- Top productos por tienda
-- Ticket promedio por cliente
-- Productos con mayor ingreso generado
-- Top clientes por gasto total
-- Ranking mensual de ventas
-
-### Benchmark
-
-`benchmark/ejecutar_hive.sh` y `benchmark/ejecutar_spark.sh` ejecutan las consultas
-en secuencia, registran tiempo de ejecución, uso de CPU y memoria, y guardan los
-resultados en `benchmark/resultados/` como CSV para análisis comparativo.
-
-### Capa agéntica
-
-El agente recibe una pregunta en lenguaje natural y ejecuta el siguiente pipeline de skills:
-
-```
-pregunta en lenguaje natural
-        │
-        ▼
-clasificador_intencion.py   → identifica la consulta analítica solicitada
-        │
-        ▼
-generador_sql.py            → llama a Gemini API y genera SQL compatible con Spark SQL
-        │
-        ▼
-ejecutor_consulta.py        → ejecuta el SQL generado en Spark
-        │
-        ▼
-formateador_resultado.py    → devuelve tabla o gráfico al dashboard
-```
-
-Consultas agénticas implementadas:
-
-- ¿Cuáles fueron los cinco productos más vendidos?
-- ¿Qué tienda tuvo mayores ventas?
-- ¿Cuál fue el mes con mayores ingresos?
-- ¿Cuáles son los diez mejores clientes?
-- ¿Qué producto generó mayores ingresos?
-- (+ 5 consultas adicionales en lenguaje natural)
-
-### Web app
-
-FastAPI sirve el dashboard y expone los endpoints del agente. El frontend muestra
-gráficos comparativos Hive vs Spark y permite ingresar consultas en lenguaje natural.
+| Consulta | Hive (s) | Spark (s) | Speedup |
+|---|---|---|---|
+| Q1 Top clientes por compras | 45.09 | 37.33 | 1.21x |
+| Q2 Ventas por tienda | 37.38 | 38.72 | 0.97x |
+| Q3 Ventas por mes | 37.72 | 33.15 | 1.14x |
+| Q4 Ventas por día | 37.90 | 34.41 | 1.10x |
+| Q5 Top productos por tienda | 63.47 | 41.23 | 1.54x |
+| Q6 Ticket promedio cliente | 58.67 | 37.66 | 1.56x |
+| Q7 Productos mayor ingreso | 48.27 | 36.73 | 1.31x |
+| Q8 Top clientes por gasto | 56.48 | 39.01 | 1.45x |
+| Q9 Ranking mensual ventas | 39.47 | 34.18 | 1.15x |
+| **Total** | **424.45** | **332.42** | **1.28x** |
 
 ---
 
@@ -345,29 +324,14 @@ cd informe
 pdflatex main.tex
 ```
 
-Las capturas de pantalla van en `informe/figuras/` y se referencian desde los `.tex`.
-
----
-
-## Capturas recomendadas para el informe
-
-| # | Qué capturar | Cuándo |
-|---|---|---|
-| 1 | Cluster EMR activo en consola AWS | Al levantar el clúster |
-| 2 | Tablas cargadas en Hive (`show tables`) | Después de `crear_tablas.hql` |
-| 3 | Resultado de una consulta Hive en terminal | Durante ejecución |
-| 4 | Resultado de la misma consulta en Spark | Durante ejecución |
-| 5 | Tabla comparativa de tiempos Hive vs Spark | Del CSV de benchmark |
-| 6 | Dashboard web con gráficos de ventas | Con la webapp corriendo |
-| 7 | Consulta agéntica en lenguaje natural y su resultado | Con la webapp corriendo |
-| 8 | Gráfico de barras comparativo Hive vs Spark | Del dashboard |
+Las capturas van en `informe/figuras/`.
 
 ---
 
 ## Referencias
 
 - [TPC-DS Benchmark](https://www.tpc.org/tpcds/)
-- [tpcds-kit (generador de datos)](https://github.com/gregrahn/tpcds-kit)
+- [tpcds-kit](https://github.com/gregrahn/tpcds-kit)
 - [Gemini API](https://ai.google.dev/gemini-api/docs)
 - [Apache Hive](https://hive.apache.org/)
 - [Apache Spark](https://spark.apache.org/)
